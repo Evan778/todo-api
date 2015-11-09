@@ -30,22 +30,45 @@ app.get('/todos/:id',function(req,res){
 });
 
 app.get('/todos',function(req,res){
-    var queryParams = req.query;
-    var filteredTodos = todos;
+    var query = req.query;
+    var where = {};
 
-    if(queryParams.hasOwnProperty('completed') && queryParams.completed === 'true'){
-        filteredTodos = _.where(filteredTodos,{completed:true});
-    } else if(queryParams.hasOwnProperty('completed') && queryParams.completed === 'false'){
-        filteredTodos = _.where(filteredTodos,{completed:false});
+    if(query.hasOwnProperty('completed') &&  query.completed === 'true'){
+        where.completed = true;
+    } else if(query.hasOwnProperty('completed') &&  query.completed === 'false'){
+        where.completed = false;
     }
-
-    if(queryParams.hasOwnProperty('q') && queryParams.q.length > 0){
-        filteredTodos = _.filter(filteredTodos,function(todo){
-            return todo.description.indexOf(queryParams.q) > -1;
-        });
+    if(query.hasOwnProperty('q') && query.q.length > 0){
+        where.description = {
+            $like: '%'+query.q+'%'
+        };
     }
+    db.todo.findAll({where:where}).then(function(todos){
+        if(!!todos){
+            res.json(todos);
+        } else {
+            res.status(400).send();
+        }
+    },function(e){
+        res.status(500).json(e);
+    });
 
-    res.json(filteredTodos);
+
+    //var filteredTodos = todos;
+    //
+    //if(queryParams.hasOwnProperty('completed') && queryParams.completed === 'true'){
+    //    filteredTodos = _.where(filteredTodos,{completed:true});
+    //} else if(queryParams.hasOwnProperty('completed') && queryParams.completed === 'false'){
+    //    filteredTodos = _.where(filteredTodos,{completed:false});
+    //}
+    //
+    //if(queryParams.hasOwnProperty('q') && queryParams.q.length > 0){
+    //    filteredTodos = _.filter(filteredTodos,function(todo){
+    //        return todo.description.indexOf(queryParams.q) > -1;
+    //    });
+    //}
+    //
+    //res.json(filteredTodos);
 });
 
 app.put('/todos/:id', function (req, res) {
